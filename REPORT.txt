@@ -1,0 +1,13 @@
+Game Created by: Henry Nguyen
+Report by: Henry Nguyen
+Date: February 10, 2016
+Class: CSCI 4070
+
+The game I created is the reverse of Asteroid. In this version, the player is an asteroid, and the objective is to the avoid getting shot by attackers. Score is kept by the amount of seconds the player avoids getting shot. Once the player is hit, the game alerts the user of the score and resets. 
+
+The game consists of two canvases. One canvas holds the background image and is set in the background. The second canvas holds all the movement and interactions and is set in the foreground. There are four attackers, one on each side of the window. The player starts as a ball/asteroid in the center. When the play button is hit, the attackers shoot at the player and the player must avoid getting hit to continue the game. 
+
+There is a play, stop, and reset button along with a difficulty slider. The slider difficulties move from Easy -> Normal -> Hard. The difficulty is determined by the speed of the bullet. The speed of the bullet is randomized to avoid a pattern. The attackers move along their respected axis and do not move away from the walls. Their speeds are also different to avoid a pattern. The bullets are shot from the location of the attackers once it leaves the screen. 
+
+The player has a border surrounding the window to prevent the asteroid from moving past the attackers. The asteroid can only move if the user presses down on an arrow key. 
+

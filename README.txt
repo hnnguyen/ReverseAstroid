@@ -1,0 +1,1 @@
+The only file that is needed to run the game is image.jpg that is alreay included in the cobweb link. 

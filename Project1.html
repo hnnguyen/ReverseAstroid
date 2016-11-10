@@ -1,0 +1,332 @@
+<!Doctype html>
+
+<html>
+<head>
+  <title>Reverse Asteroid </title>
+  <!-- Places canvas on top of one another-->
+  <style type="text/css">
+    .container {
+      position: relative;
+    }
+
+    .container > canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+
+  <script type="text/javascript">
+  /* canvas variables */
+  var canvas;
+  var canvas2;
+  var ctx;
+  var ctx2;
+  var interval = 10;
+
+  /* variables for attackers/squares */
+  var x = [0,250,460,250];
+  var y = [250,0,250,460];
+  var width = [40,40,40,40];
+  var height = [40,40,40,40];
+  var dx = [0,2.5,0,2];
+  var dy = [2,0,2.5,0];
+  
+  /* variables for bullets */
+  var bulw = [20,10,20,10];
+  var bulh = [10,20,10,20];
+  var bulx = [x[0],x[1],x[2],x[3]];
+  var buly = [y[0],y[1],y[2],y[3]];
+  var bulvx = [(Math.random() * 3 + 3),0,-(Math.random() * 3 + 3),0];
+  var bulvy = [0,(Math.random() * 3 + 3),0,-(Math.random() * 3 + 3)];
+  var bulShot = [false,false,false,false];
+  
+  /* variables for ball */
+  var bx = 260;
+  var by = 250;
+  var bvx = 5; //ball x velocity
+  var bvy = 5; //ball y velocity
+  var br = 30; //ball radius
+
+  /* keyboard variables */
+  var downDown = false;
+  var upDown = false;
+  var leftDown = false;
+  var rightDown = false;
+
+  /* general game variables */
+  var score = 0;
+  var playing;
+  var circDisx;
+  var circDisy;
+  var cornerDis_sq;
+
+  window.requestFrame = ( function( callback ) {
+               return( window.requestAnimationFrame ||
+                 window.webkitRequestAnimationFrame ||
+           window.mozRequestAnimationFrame ||
+           window.oRequestAnimationFrame ||
+           window.msRequestAnimationFrame ||
+           function( callback ) { window.setTimeout( callback, interval ); } );
+                } 
+          ) ();
+
+  /* Initializes the canvases */
+  function init(){
+
+    canvas = document.getElementById("canvas");
+    ctx = canvas.getContext("2d");
+    canvas2 = document.getElementById("canvas2");
+    ctx2 = canvas2.getContext("2d");
+
+    var background = new Image();
+    /* File extension for desktop */
+    background.src = "file:///Users/henrynguyen/Desktop/4070/Project1/image.jpg";
+    /* File extension for cobweb */
+    //background.src = "http://cobweb.cs.uga.edu/~hnguyen/image.jpg";
+    background.onload = function(){
+      ctx2.drawImage(background,0,0);
+    }
+
+    window.addEventListener( 'keydown',onKeyDown,true );
+    window.addEventListener( 'keyup',onKeyUp,true );
+    playing = new Boolean();
+    playing = false;
+    draw();
+    score = 0;
+    updateScore();
+
+  }
+
+  /* Keyboard events */
+  function onKeyDown(evt) {
+      if (evt.keyCode == 37)    leftDown = true;
+      if (evt.keyCode == 38)    upDown = true;
+      if (evt.keyCode == 39)    rightDown = true;
+      if (evt.keyCode == 40)    downDown = true;
+  }
+
+  function onKeyUp(evt) {
+      if (evt.keyCode == 37)    leftDown = false;
+      if (evt.keyCode == 38)    upDown = false;
+      if (evt.keyCode == 39)    rightDown = false;
+      if (evt.keyCode == 40)    downDown = false;
+  }
+
+  /* Start Button */
+  function startPlaying(){
+    playing = true;
+    draw();
+  }
+
+  /* Stop Button */
+  function stopPlaying(){
+    playing = false;
+  }
+
+  /* Reset button */
+  function reset(){
+    score = 0;
+    playing = false;
+    ctx.clearRect(0,0,500,500);
+    x = [0,250,460,250];
+    y = [250,0,250,460];
+    bulx = [x[0],x[1],x[2],x[3]];
+    buly = [y[0],y[1],y[2],y[3]];
+    bx = 260;
+    by = 250;
+    downDown = false;
+    upDown = false;
+    leftDown = false;
+    rightDown = false;
+    draw();
+  }
+
+  function range(){
+    var x = document.getElementById("myRange").value;
+    if(x == 1){
+      bulvx = [3,0,-3.5,0];
+      bulvy = [0,3.5,0,-3];
+    }else if(x == 5){
+      bulvx = [6.5,0,-6,0];
+      bulvy = [0,6,0,-5.5];
+    }else{
+      bulvx = [(Math.random() * 3 + 3),0,-(Math.random() * 3 + 3),0];
+      bulvy = [0,(Math.random() * 3 + 3),0,-(Math.random() * 3 + 3)];
+    }
+  }
+
+  /* Shoot function */
+  function shoot(){
+    for(var i = 0; i < bulx.length; i++){
+      bulx[i] += bulvx[i];
+      buly[i] += bulvy[i];
+    }
+    if(bulx[0] > canvas.width){
+      bulShot[0] = true;
+    }
+    if(buly[1] > canvas.height){
+      bulShot[1] = true;
+    }
+    if(bulx[2] < 0){
+      bulShot[2] = true;
+    }
+    if(buly[3] < 0){
+      bulShot[3] = true;
+    }
+      
+  }
+
+  /* Makes bullet */
+  function makeBullet(bulx,buly,bulw,bulh){
+    ctx.fillStyle = '#00EE00';
+    ctx.beginPath();
+    ctx.rect(bulx,buly,bulw,bulh);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /* Draws everything on canvas as well as causes movement */
+  function draw(){
+    ctx.clearRect(0,0,500,500);
+    range();
+    drawBall(bx,by,br);
+
+    /* Keyboard events/movement */
+    if(leftDown){
+      bx -= bvx;
+    }
+    if(rightDown){
+      bx += bvx;
+    }
+    if(upDown){
+      by -= bvy;
+    }
+    if(downDown){
+      by += bvy;
+    }
+
+    /* Creates a border for the ball */
+    if(bx > canvas.width-80){
+      bx = canvas.width-80;
+    }else if(bx < 80){
+      bx = 80;
+    }else if(by > canvas.height-80){
+      by = canvas.height-80;
+    }else if(by < 80){
+      by = 80;
+    }
+
+    /* Creates squares/attackers and movement */
+    for(var i = 0; i < x.length; i++){
+      drawSquare(x[i],y[i],width[i],height[i]);
+    }
+    
+    for(var i = 0; i < x.length; i++){
+      
+      if(x[i] < 0 || x[i] > canvas.width - (width[i])){
+        dx[i] = -dx[i];
+      }
+      if(y[i] < 0 || y[i] > canvas.height - (height[i])){
+        dy[i] = -dy[i];
+      }
+      x[i] += dx[i];
+      y[i] += dy[i];
+    }
+
+    if( playing == true){
+      requestFrame( function() { draw(); } );
+    }
+    updateScore();
+    for(var i = 0; i < bulx.length; i++){
+      makeBullet(bulx[i],buly[i],bulw[i],bulh[i]);
+    }
+
+    /* Bullet resets after it goes off screen */
+    shoot();
+    for(var i = 0; i < bulx.length; i++){
+      if(bulShot[i] == true){
+          bulx[i] = x[i];
+          buly[i] = y[i];
+          bulShot[i] = false;
+        }
+      /* Collision */
+      if(collision(i)){
+        alert("You've been hit. Your score is: " + Math.ceil(score/100));
+        playing = false;
+        reset();
+      }
+    }
+  
+    
+    
+  }
+
+  function updateScore(){
+    document.getElementById( "score" ).innerHTML = "score = " + Math.ceil(score/100);
+    score++;
+  }
+
+  function drawSquare(x,y,width,height){
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.rect(x,y,width,height);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawBall(x,y,r){
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.arc(x,y,r,0, 2*Math.PI, true);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /* Collision function */
+  function collision(i){
+    circDisx = Math.abs(bx - bulx[i]);
+    circDisy = Math.abs(by - buly[i]);
+
+    if(circDisx > (bulw[i]/2 + br)){
+      return false;
+    }
+    if(circDisy > (bulh[i]/2 + br)){
+      return false;
+    }
+    if(circDisx <= (bulw[i]/2)-20){
+      return true;
+    }
+    if(circDisy <= (bulh[i]/2)-20){
+      return true;
+    }
+    return (cornerDis_sq = (circDisx - bulw[i]/2)^2 + (circDisy - bulh[i]/2)^2);
+      
+    
+  };
+
+   </script>
+ </head>
+
+ <body onload=init()>
+  <div id="score">Score = </div>
+  <button type="button" onclick="startPlaying()">Play</button>
+  <button type="button" onclick="stopPlaying()">Stop</button>
+  <button type="button" onclick="reset()">Reset</button>
+  <input type="range" id="myRange" min="1" max="5" step="2">
+  <p>Move the asteroid to avoid getting shot. Use the arrow keys to move and try to survive as long as possible!</p>
+  <p>Move the slider to increase or decrease difficulty. The Slider moves from Easy -> Normal -> Hard</p>
+  <div id = "container" class = "container"> 
+      
+    <canvas id="canvas2" width="500" height="500" style="border: 10px black solid"></canvas>
+    <canvas id="canvas" width="500" height="500" style="border: 10px black solid"/>
+      Your browser does not support the canvas element.
+    </canvas>
+  
+  </div>
+  
+
+</body>
+</html>
